@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from pytube import YouTube
 from streamlit_player import st_player
+from streamlit_javascript import st_javascript
 
 
 def format_seconds(total_seconds: float) -> str:
@@ -14,6 +15,39 @@ def format_seconds(total_seconds: float) -> str:
 
 st.set_page_config(page_title="YouTube Sports Match Event Logger", layout="wide")
 st.title("🎥 Sports Match Event Logger")
+
+# Referee setup
+st.text_input("Referee for A key", key="referee_a")
+st.text_input("Referee for S key", key="referee_s")
+st.text_input("Referee for D key", key="referee_d")
+
+if "current_referee" not in st.session_state:
+    st.session_state["current_referee"] = ""
+
+key_pressed = st_javascript(
+    """
+if (!window.refKeyListener) {
+    document.addEventListener('keydown', (e) => {
+        const key = e.key.toLowerCase();
+        if (['a', 's', 'd'].includes(key)) {
+            Streamlit.setComponentValue(key);
+        }
+    });
+    window.refKeyListener = true;
+}
+""",
+    key="ref_key_listener",
+)
+
+if key_pressed:
+    mapping = {
+        "a": st.session_state.get("referee_a", ""),
+        "s": st.session_state.get("referee_s", ""),
+        "d": st.session_state.get("referee_d", ""),
+    }
+    st.session_state["current_referee"] = mapping.get(key_pressed, "")
+
+st.markdown(f"**Current Referee:** {st.session_state.get('current_referee', '')}")
 
 # Input: YouTube URL
 youtube_url = st.text_input("Enter YouTube Video URL:", "")
@@ -42,6 +76,7 @@ if "event_log" not in st.session_state:
 
 st.markdown("---")
 st.header("📝 Log Event")
+st.markdown(f"**Current Referee:** {st.session_state.get('current_referee', '')}")
 event_type = st.selectbox(
     "Event Type",
     [
@@ -68,6 +103,7 @@ if st.button("Log Event"):
             "Timestamp": formatted_time,
             "Event": selected_event,
             "Description": description,
+            "Referee": st.session_state.get("current_referee", ""),
         }
     )
     st.success("Event logged!")
