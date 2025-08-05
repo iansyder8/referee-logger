@@ -23,6 +23,8 @@ st.text_input("Referee for D key", key="referee_d")
 
 if "current_referee" not in st.session_state:
     st.session_state["current_referee"] = ""
+if "ref_key" not in st.session_state:
+    st.session_state["ref_key"] = ""
 
 key_pressed = st_javascript(
     """
@@ -40,6 +42,7 @@ if (!window.refKeyListener) {
 )
 
 if key_pressed:
+    st.session_state["ref_key"] = key_pressed
     mapping = {
         "a": st.session_state.get("referee_a", ""),
         "s": st.session_state.get("referee_s", ""),
@@ -97,16 +100,22 @@ formatted_time = format_seconds(current_seconds)
 st.markdown(f"**Current Video Time:** {formatted_time}")
 
 if st.button("Log Event"):
-    selected_event = event_type  # preserve the exact selected value
-    st.session_state.event_log.append(
-        {
-            "Timestamp": formatted_time,
-            "Event": selected_event,
-            "Description": description,
-            "Referee": st.session_state.get("current_referee", ""),
-        }
-    )
-    st.success("Event logged!")
+    if not st.session_state.get("ref_key"):
+        st.warning("Press A, S, or D to select a referee before logging.")
+    else:
+        selected_event = event_type  # preserve the exact selected value
+        referee_name = st.session_state.get(
+            f"referee_{st.session_state['ref_key']}", ""
+        )
+        st.session_state.event_log.append(
+            {
+                "Timestamp": formatted_time,
+                "Event": selected_event,
+                "Description": description,
+                "Referee": referee_name,
+            }
+        )
+        st.success("Event logged!")
 
 # Display and export table
 st.markdown("---")
