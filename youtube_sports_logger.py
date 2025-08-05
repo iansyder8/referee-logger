@@ -45,33 +45,29 @@ if "ref_key" not in st.session_state:
 if "last_key" not in st.session_state:
     st.session_state["last_key"] = ""
 
-# Buttons to select referees
 ref_map = {
     "a": st.session_state.get("referee_a", ""),
     "s": st.session_state.get("referee_s", ""),
     "d": st.session_state.get("referee_d", ""),
 }
-ref_cols = st.columns(3)
-for col, key in zip(ref_cols, ["a", "s", "d"]):
-    with col:
-        button_label = f"{key.upper()}: {ref_map[key]}" if ref_map[key] else key.upper()
-        button_type = (
-            "primary" if st.session_state.get("ref_key") == key else "secondary"
-        )
-        if st.button(button_label, key=f"select_ref_{key}", type=button_type):
-            st.session_state["ref_key"] = key
-            st.session_state["current_referee"] = ref_map[key]
 
 # Global key listener for referee and event hotkeys
 key_pressed = st_javascript(
     """
 if (!window.globalKeyListener) {
-    document.addEventListener('keydown', (e) => {
-        const key = e.key.toLowerCase();
+    const handler = (e) => {
+        let key = e.key || e.keyCode;
+        if (typeof key === 'string') {
+            key = key.toLowerCase();
+        } else {
+            key = String.fromCharCode(key).toLowerCase();
+        }
         if (['a','s','d','1','2','3','4','5','6','7','8','9'].includes(key)) {
+            e.preventDefault();
             Streamlit.setComponentValue(key);
         }
-    });
+    };
+    window.addEventListener('keydown', handler, true);
     window.globalKeyListener = true;
 }
 """,
@@ -111,8 +107,6 @@ if key_pressed and key_pressed != st.session_state.get("last_key"):
         event_name = EVENT_TYPES[int(key_pressed) - 1]
         log_event(event_name)
 
-st.markdown(f"**Current Referee:** {st.session_state.get('current_referee', '')}")
-
 # Input: YouTube URL
 youtube_url = st.text_input("Enter YouTube Video URL:", "")
 
@@ -140,6 +134,16 @@ if "event_log" not in st.session_state:
 
 st.markdown("---")
 st.header("📝 Log Event")
+# Referee selector above event selector
+ref_cols = st.columns(3)
+for col, key in zip(ref_cols, ["a", "s", "d"]):
+    with col:
+        button_label = f"{key.upper()}: {ref_map[key]}" if ref_map[key] else key.upper()
+        button_type = "primary" if st.session_state.get("ref_key") == key else "secondary"
+        if st.button(button_label, key=f"select_ref_{key}", type=button_type):
+            st.session_state["ref_key"] = key
+            st.session_state["current_referee"] = ref_map[key]
+
 st.markdown(f"**Current Referee:** {st.session_state.get('current_referee', '')}")
 
 # Description input outside of buttons so it can be reused
