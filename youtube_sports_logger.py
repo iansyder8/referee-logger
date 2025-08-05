@@ -1,7 +1,6 @@
 
 import streamlit as st
 import pandas as pd
-from pytube import YouTube
 from streamlit_player import st_player
 
 
@@ -19,21 +18,19 @@ st.title("🎥 Sports Match Event Logger")
 youtube_url = st.text_input("Enter YouTube Video URL:", "")
 
 if youtube_url:
-    try:
-        YouTube(youtube_url)
-        player_event = st_player(
-            youtube_url,
-            events=["onProgress"],
-            progress_interval=1000,
-            key="youtube_player",
+    player_event = st_player(
+        youtube_url,
+        events=["onProgress"],
+        progress_interval=1000,
+        key="youtube_player",
+    )
+    if player_event and player_event.name == "onProgress" and player_event.data:
+        st.session_state["current_time"] = player_event.data.get(
+            "playedSeconds", 0
         )
-        if player_event.name == "onProgress":
-            st.session_state["current_time"] = player_event.data.get(
-                "playedSeconds", 0
-            )
+    if not st.session_state.get("video_loaded"):
         st.success("YouTube video loaded successfully!")
-    except Exception as e:
-        st.error(f"Failed to load video: {e}")
+        st.session_state["video_loaded"] = True
 
 # Session state to store events
 if "event_log" not in st.session_state:
