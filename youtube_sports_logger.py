@@ -18,7 +18,7 @@ def is_valid_timestamp(value: str) -> bool:
     except ValueError:
         return False
 
-st.set_page_config(page_title="YouTube Sports Match Logger", layout="wide")
+st.set_page_config(page_title="YouTube Sports Match Event Logger", layout="wide")
 st.title("🎥 Sports Match Event Logger")
 
 # Input: YouTube URL
