@@ -45,11 +45,6 @@ st.header("📝 Log Event")
 event_type = st.selectbox(
     "Event Type",
     [
-        "Goal",
-        "Foul",
-        "Substitution",
-        "Injury",
-        "Other",
         "Try Scored",
         "Penalty - Hard Touch",
         "Penalty - FWD Pass",
