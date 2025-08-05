@@ -1,22 +1,16 @@
 
 import streamlit as st
 import pandas as pd
-from datetime import datetime
 from pytube import YouTube
+from streamlit_player import st_player
 
 
-def is_valid_timestamp(value: str) -> bool:
-    """Return ``True`` if ``value`` matches ``HH:MM:SS`` format.
-
-    ``datetime.strptime`` raises ``ValueError`` when the input cannot be
-    parsed, which we catch to determine validity. This prevents malformed
-    timestamps like ``99:99`` or ``123`` from being recorded.
-    """
-    try:
-        datetime.strptime(value, "%H:%M:%S")
-        return True
-    except ValueError:
-        return False
+def format_seconds(total_seconds: float) -> str:
+    """Return ``HH:MM:SS`` formatted string for the given ``total_seconds``."""
+    total_seconds = int(total_seconds)
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 st.set_page_config(page_title="YouTube Sports Match Event Logger", layout="wide")
 st.title("🎥 Sports Match Event Logger")
@@ -26,9 +20,17 @@ youtube_url = st.text_input("Enter YouTube Video URL:", "")
 
 if youtube_url:
     try:
-        yt = YouTube(youtube_url)
-        video_id = yt.video_id
-        st.video(f"https://www.youtube.com/embed/{video_id}")
+        YouTube(youtube_url)
+        player_event = st_player(
+            youtube_url,
+            events=["onProgress"],
+            progress_interval=1000,
+            key="youtube_player",
+        )
+        if player_event.name == "onProgress":
+            st.session_state["current_time"] = player_event.data.get(
+                "playedSeconds", 0
+            )
         st.success("YouTube video loaded successfully!")
     except Exception as e:
         st.error(f"Failed to load video: {e}")
@@ -41,20 +43,17 @@ st.markdown("---")
 st.header("📝 Log Event")
 event_type = st.selectbox("Event Type", ["Goal", "Foul", "Substitution", "Injury", "Other"])
 description = st.text_input("Description (optional)")
-timestamp = st.text_input("YouTube Timestamp (e.g., 00:23:45)", "")
+current_seconds = st.session_state.get("current_time", 0)
+formatted_time = format_seconds(current_seconds)
+st.markdown(f"**Current Video Time:** {formatted_time}")
 
 if st.button("Log Event"):
-    if not timestamp:
-        st.warning("Please enter a timestamp.")
-    elif not is_valid_timestamp(timestamp):
-        st.warning("Timestamp must be in HH:MM:SS format.")
-    else:
-        st.session_state.event_log.append({
-            "Timestamp": timestamp,
-            "Event": event_type,
-            "Description": description,
-        })
-        st.success("Event logged!")
+    st.session_state.event_log.append({
+        "Timestamp": formatted_time,
+        "Event": event_type,
+        "Description": description,
+    })
+    st.success("Event logged!")
 
 # Display and export table
 st.markdown("---")
