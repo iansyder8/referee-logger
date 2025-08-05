@@ -1,6 +1,7 @@
 
 import streamlit as st
 import pandas as pd
+from pytube import YouTube
 from streamlit_player import st_player
 
 
@@ -29,6 +30,19 @@ if youtube_url:
             "playedSeconds", 0
         )
     if not st.session_state.get("video_loaded"):
+    try:
+        YouTube(youtube_url)
+        player_event = st_player(
+            youtube_url,
+            events=["progress"],
+            progress_interval=1000,
+            key="youtube_player",
+        )
+        if player_event.name == "progress":
+            st.session_state["current_time"] = player_event.data.get(
+                "playedSeconds", 0
+            )
+main
         st.success("YouTube video loaded successfully!")
         st.session_state["video_loaded"] = True
 
