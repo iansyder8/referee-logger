@@ -43,7 +43,23 @@ if "event_log" not in st.session_state:
 st.markdown("---")
 st.header("📝 Log Event")
 event_type = st.selectbox(
-    "Event Type", ["Goal", "Foul", "Substitution", "Injury", "Other"]
+    "Event Type",
+    [
+        "Goal",
+        "Foul",
+        "Substitution",
+        "Injury",
+        "Other",
+        "Try Scored",
+        "Penalty - Hard Touch",
+        "Penalty - FWD Pass",
+        "Penalty - In The Ruck",
+        "Penalty - Not Moving Forward",
+        "Penalty - Unknown",
+        "Turn Over",
+        "Penalty Missed",
+        "Turn Over Missed",
+    ],
 )
 description = st.text_input("Description (optional)")
 current_seconds = st.session_state.get("current_time", 0)
@@ -51,10 +67,11 @@ formatted_time = format_seconds(current_seconds)
 st.markdown(f"**Current Video Time:** {formatted_time}")
 
 if st.button("Log Event"):
+    selected_event = event_type  # preserve the exact selected value
     st.session_state.event_log.append(
         {
             "Timestamp": formatted_time,
-            "Event": event_type,
+            "Event": selected_event,
             "Description": description,
         }
     )
