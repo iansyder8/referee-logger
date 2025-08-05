@@ -63,7 +63,13 @@ if st.session_state.event_log:
     df = pd.DataFrame(st.session_state.event_log)
     st.dataframe(df, use_container_width=True)
 
-    csv = df.to_csv(index=False).encode("utf-8")
-    st.download_button("📥 Download CSV", data=csv, file_name="event_log.csv", mime="text/csv")
+    # Write the CSV to a local file and offer it for download
+    output_path = "event_log.csv"
+    df.to_csv(output_path, index=False)
+    with open(output_path, "rb") as file:
+        st.download_button(
+            "📥 Download CSV", data=file, file_name=output_path, mime="text/csv"
+        )
+    st.caption(f"CSV saved locally as {output_path}")
 else:
     st.info("No events logged yet.")
