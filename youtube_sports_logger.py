@@ -16,6 +16,23 @@ def format_seconds(total_seconds: float) -> str:
 st.set_page_config(page_title="YouTube Sports Match Event Logger", layout="wide")
 st.title("🎥 Sports Match Event Logger")
 
+# -----------------------------------------------------------------------------
+# Configuration
+# -----------------------------------------------------------------------------
+
+# Available event types mapped to hotkeys 1-9
+EVENT_TYPES = [
+    "Try Scored",
+    "Penalty - Hard Touch",
+    "Penalty - FWD Pass",
+    "Penalty - In The Ruck",
+    "Penalty - Not Moving Forward",
+    "Penalty - Unknown",
+    "Turn Over",
+    "Penalty Missed",
+    "Turn Over Missed",
+]
+
 # Referee setup
 st.text_input("Referee for A key", key="referee_a")
 st.text_input("Referee for S key", key="referee_s")
@@ -25,30 +42,74 @@ if "current_referee" not in st.session_state:
     st.session_state["current_referee"] = ""
 if "ref_key" not in st.session_state:
     st.session_state["ref_key"] = ""
+if "last_key" not in st.session_state:
+    st.session_state["last_key"] = ""
 
+# Buttons to select referees
+ref_map = {
+    "a": st.session_state.get("referee_a", ""),
+    "s": st.session_state.get("referee_s", ""),
+    "d": st.session_state.get("referee_d", ""),
+}
+ref_cols = st.columns(3)
+for col, key in zip(ref_cols, ["a", "s", "d"]):
+    with col:
+        button_label = f"{key.upper()}: {ref_map[key]}" if ref_map[key] else key.upper()
+        button_type = (
+            "primary" if st.session_state.get("ref_key") == key else "secondary"
+        )
+        if st.button(button_label, key=f"select_ref_{key}", type=button_type):
+            st.session_state["ref_key"] = key
+            st.session_state["current_referee"] = ref_map[key]
+
+# Global key listener for referee and event hotkeys
 key_pressed = st_javascript(
     """
-if (!window.refKeyListener) {
+if (!window.globalKeyListener) {
     document.addEventListener('keydown', (e) => {
         const key = e.key.toLowerCase();
-        if (['a', 's', 'd'].includes(key)) {
+        if (['a','s','d','1','2','3','4','5','6','7','8','9'].includes(key)) {
             Streamlit.setComponentValue(key);
         }
     });
-    window.refKeyListener = true;
+    window.globalKeyListener = true;
 }
 """,
-    key="ref_key_listener",
+    key="global_key_listener",
 )
 
-if key_pressed:
-    st.session_state["ref_key"] = key_pressed
-    mapping = {
-        "a": st.session_state.get("referee_a", ""),
-        "s": st.session_state.get("referee_s", ""),
-        "d": st.session_state.get("referee_d", ""),
-    }
-    st.session_state["current_referee"] = mapping.get(key_pressed, "")
+
+def log_event(event_name: str) -> None:
+    """Log an event with the currently selected referee."""
+    if not st.session_state.get("ref_key"):
+        st.warning("Press A, S, or D to select a referee before logging.")
+        return
+    referee_name = st.session_state.get(
+        f"referee_{st.session_state['ref_key']}", ""
+    )
+    description = st.session_state.get("description", "")
+    current_seconds = st.session_state.get("current_time", 0)
+    formatted_time = format_seconds(current_seconds)
+    st.session_state.event_log.append(
+        {
+            "Timestamp": formatted_time,
+            "Event": event_name,
+            "Description": description,
+            "Referee": referee_name,
+        }
+    )
+    st.success(f"Event '{event_name}' logged!")
+
+
+# Handle hotkeys
+if key_pressed and key_pressed != st.session_state.get("last_key"):
+    st.session_state["last_key"] = key_pressed
+    if key_pressed in ["a", "s", "d"]:
+        st.session_state["ref_key"] = key_pressed
+        st.session_state["current_referee"] = ref_map.get(key_pressed, "")
+    elif key_pressed in [str(i) for i in range(1, len(EVENT_TYPES) + 1)]:
+        event_name = EVENT_TYPES[int(key_pressed) - 1]
+        log_event(event_name)
 
 st.markdown(f"**Current Referee:** {st.session_state.get('current_referee', '')}")
 
@@ -80,42 +141,20 @@ if "event_log" not in st.session_state:
 st.markdown("---")
 st.header("📝 Log Event")
 st.markdown(f"**Current Referee:** {st.session_state.get('current_referee', '')}")
-event_type = st.selectbox(
-    "Event Type",
-    [
-        "Try Scored",
-        "Penalty - Hard Touch",
-        "Penalty - FWD Pass",
-        "Penalty - In The Ruck",
-        "Penalty - Not Moving Forward",
-        "Penalty - Unknown",
-        "Turn Over",
-        "Penalty Missed",
-        "Turn Over Missed",
-    ],
-)
-description = st.text_input("Description (optional)")
+
+# Description input outside of buttons so it can be reused
+st.text_input("Description (optional)", key="description")
 current_seconds = st.session_state.get("current_time", 0)
 formatted_time = format_seconds(current_seconds)
 st.markdown(f"**Current Video Time:** {formatted_time}")
 
-if st.button("Log Event"):
-    if not st.session_state.get("ref_key"):
-        st.warning("Press A, S, or D to select a referee before logging.")
-    else:
-        selected_event = event_type  # preserve the exact selected value
-        referee_name = st.session_state.get(
-            f"referee_{st.session_state['ref_key']}", ""
-        )
-        st.session_state.event_log.append(
-            {
-                "Timestamp": formatted_time,
-                "Event": selected_event,
-                "Description": description,
-                "Referee": referee_name,
-            }
-        )
-        st.success("Event logged!")
+# Event buttons laid out in a grid
+event_cols = st.columns(3)
+for i, event_name in enumerate(EVENT_TYPES, start=1):
+    col = event_cols[(i - 1) % 3]
+    with col:
+        if st.button(f"{i}. {event_name}", key=f"event_btn_{i}"):
+            log_event(event_name)
 
 # Display and export table
 st.markdown("---")
