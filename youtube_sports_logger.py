@@ -1,7 +1,22 @@
 
 import streamlit as st
 import pandas as pd
+from datetime import datetime
 from pytube import YouTube
+
+
+def is_valid_timestamp(value: str) -> bool:
+    """Return ``True`` if ``value`` matches ``HH:MM:SS`` format.
+
+    ``datetime.strptime`` raises ``ValueError`` when the input cannot be
+    parsed, which we catch to determine validity. This prevents malformed
+    timestamps like ``99:99`` or ``123`` from being recorded.
+    """
+    try:
+        datetime.strptime(value, "%H:%M:%S")
+        return True
+    except ValueError:
+        return False
 
 st.set_page_config(page_title="YouTube Sports Match Logger", layout="wide")
 st.title("🎥 Sports Match Event Logger")
@@ -29,15 +44,17 @@ description = st.text_input("Description (optional)")
 timestamp = st.text_input("YouTube Timestamp (e.g., 00:23:45)", "")
 
 if st.button("Log Event"):
-    if timestamp:
+    if not timestamp:
+        st.warning("Please enter a timestamp.")
+    elif not is_valid_timestamp(timestamp):
+        st.warning("Timestamp must be in HH:MM:SS format.")
+    else:
         st.session_state.event_log.append({
             "Timestamp": timestamp,
             "Event": event_type,
-            "Description": description
+            "Description": description,
         })
         st.success("Event logged!")
-    else:
-        st.warning("Please enter a timestamp.")
 
 # Display and export table
 st.markdown("---")
