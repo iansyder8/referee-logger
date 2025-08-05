@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 from pytube import YouTube
@@ -11,6 +10,7 @@ def format_seconds(total_seconds: float) -> str:
     hours, remainder = divmod(total_seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
 
 st.set_page_config(page_title="YouTube Sports Match Event Logger", layout="wide")
 st.title("🎥 Sports Match Event Logger")
@@ -26,25 +26,15 @@ if youtube_url:
         key="youtube_player",
     )
     if player_event and player_event.name == "onProgress" and player_event.data:
-        st.session_state["current_time"] = player_event.data.get(
-            "playedSeconds", 0
-        )
+        st.session_state["current_time"] = player_event.data.get("playedSeconds", 0)
+
     if not st.session_state.get("video_loaded"):
-    try:
-        YouTube(youtube_url)
-        player_event = st_player(
-            youtube_url,
-            events=["progress"],
-            progress_interval=1000,
-            key="youtube_player",
-        )
-        if player_event.name == "progress":
-            st.session_state["current_time"] = player_event.data.get(
-                "playedSeconds", 0
-            )
-main
-        st.success("YouTube video loaded successfully!")
-        st.session_state["video_loaded"] = True
+        try:
+            YouTube(youtube_url)
+            st.success("YouTube video loaded successfully!")
+            st.session_state["video_loaded"] = True
+        except Exception as e:
+            st.error(f"Failed to load YouTube video: {e}")
 
 # Session state to store events
 if "event_log" not in st.session_state:
@@ -52,18 +42,22 @@ if "event_log" not in st.session_state:
 
 st.markdown("---")
 st.header("📝 Log Event")
-event_type = st.selectbox("Event Type", ["Goal", "Foul", "Substitution", "Injury", "Other"])
+event_type = st.selectbox(
+    "Event Type", ["Goal", "Foul", "Substitution", "Injury", "Other"]
+)
 description = st.text_input("Description (optional)")
 current_seconds = st.session_state.get("current_time", 0)
 formatted_time = format_seconds(current_seconds)
 st.markdown(f"**Current Video Time:** {formatted_time}")
 
 if st.button("Log Event"):
-    st.session_state.event_log.append({
-        "Timestamp": formatted_time,
-        "Event": event_type,
-        "Description": description,
-    })
+    st.session_state.event_log.append(
+        {
+            "Timestamp": formatted_time,
+            "Event": event_type,
+            "Description": description,
+        }
+    )
     st.success("Event logged!")
 
 # Display and export table
