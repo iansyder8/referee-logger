@@ -54,7 +54,12 @@ ref_map = {
 # Global key listener for referee and event hotkeys
 key_pressed = st_javascript(
     """
+thvxoy-codex/place-referee-selector-above-event-selector
+const root = window.parent || window;
+if (!root.globalKeyListener) {
+=======
 if (!window.globalKeyListener) {
+main
     const handler = (e) => {
         let key = e.key || e.keyCode;
         if (typeof key === 'string') {
@@ -67,8 +72,13 @@ if (!window.globalKeyListener) {
             Streamlit.setComponentValue(key);
         }
     };
+thvxoy-codex/place-referee-selector-above-event-selector
+    root.document.addEventListener('keydown', handler, true);
+    root.globalKeyListener = true;
+=======
     window.addEventListener('keydown', handler, true);
     window.globalKeyListener = true;
+main
 }
 """,
     key="global_key_listener",
@@ -83,14 +93,12 @@ def log_event(event_name: str) -> None:
     referee_name = st.session_state.get(
         f"referee_{st.session_state['ref_key']}", ""
     )
-    description = st.session_state.get("description", "")
     current_seconds = st.session_state.get("current_time", 0)
     formatted_time = format_seconds(current_seconds)
     st.session_state.event_log.append(
         {
             "Timestamp": formatted_time,
             "Event": event_name,
-            "Description": description,
             "Referee": referee_name,
         }
     )
@@ -146,8 +154,6 @@ for col, key in zip(ref_cols, ["a", "s", "d"]):
 
 st.markdown(f"**Current Referee:** {st.session_state.get('current_referee', '')}")
 
-# Description input outside of buttons so it can be reused
-st.text_input("Description (optional)", key="description")
 current_seconds = st.session_state.get("current_time", 0)
 formatted_time = format_seconds(current_seconds)
 st.markdown(f"**Current Video Time:** {formatted_time}")
