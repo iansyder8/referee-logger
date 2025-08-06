@@ -14,6 +14,22 @@ def format_seconds(total_seconds: float) -> str:
 
 
 st.set_page_config(page_title="Touch Ref Game Logger", layout="wide")
+
+# Expand the main container to the full screen width
+st.markdown(
+    """
+    <style>
+        .stApp .block-container {
+            padding-top: 1rem;
+            padding-left: 0;
+            padding-right: 0;
+            max-width: 100%;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.title("🎥 Touch Ref Game Logger")
 
 # -----------------------------------------------------------------------------
@@ -119,10 +135,14 @@ if key_pressed and key_pressed != st.session_state.get("last_key"):
 youtube_url = st.text_input("Enter YouTube Video URL:", "")
 
 if youtube_url:
+    viewport_width = st_javascript("window.innerWidth", key="viewport_width") or 0
+    # Maintain a 16:9 aspect ratio based on the available width
+    player_height = int(viewport_width * 9 / 16) if viewport_width else 405
     player_event = st_player(
         youtube_url,
         events=["onProgress"],
         progress_interval=1000,
+        height=player_height,
         key="youtube_player",
     )
     if player_event and player_event.name == "onProgress" and player_event.data:
