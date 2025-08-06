@@ -30,8 +30,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.title("🎥 Touch Ref Game Logger")
-
 # -----------------------------------------------------------------------------
 # Configuration
 # -----------------------------------------------------------------------------
@@ -67,15 +65,16 @@ ref_map = {
     "d": st.session_state.get("referee_d", ""),
 }
 
+# Session state to store events
+if "event_log" not in st.session_state:
+    st.session_state.event_log = []
+
+
 # Global key listener for referee and event hotkeys
 key_pressed = st_javascript(
     """
-thvxoy-codex/place-referee-selector-above-event-selector
 const root = window.parent || window;
 if (!root.globalKeyListener) {
-=======
-if (!window.globalKeyListener) {
-main
     const handler = (e) => {
         let key = e.key || e.keyCode;
         if (typeof key === 'string') {
@@ -88,13 +87,8 @@ main
             Streamlit.setComponentValue(key);
         }
     };
-thvxoy-codex/place-referee-selector-above-event-selector
     root.document.addEventListener('keydown', handler, true);
     root.globalKeyListener = true;
-=======
-    window.addEventListener('keydown', handler, true);
-    window.globalKeyListener = true;
-main
 }
 """,
     key="global_key_listener",
@@ -136,55 +130,47 @@ youtube_url = st.text_input("Enter YouTube Video URL:", "")
 
 if youtube_url:
     viewport_width = st_javascript("window.innerWidth", key="viewport_width") or 0
-    # Maintain a 16:9 aspect ratio based on the available width
-    player_height = int(viewport_width * 9 / 16) if viewport_width else 405
-    player_event = st_player(
-        youtube_url,
-        events=["onProgress"],
-        progress_interval=1000,
-        height=player_height,
-        key="youtube_player",
-    )
-    if player_event and player_event.name == "onProgress" and player_event.data:
-        st.session_state["current_time"] = player_event.data.get("playedSeconds", 0)
+    col1, col2 = st.columns([3, 2])
+    with col1:
+        # Maintain a 16:9 aspect ratio based on the available width
+        player_height = int(viewport_width * 9 / 16) if viewport_width else 405
+        player_event = st_player(
+            youtube_url,
+            events=["onProgress"],
+            progress_interval=1000,
+            height=player_height,
+            key="youtube_player",
+        )
+        if player_event and player_event.name == "onProgress" and player_event.data:
+            st.session_state["current_time"] = player_event.data.get("playedSeconds", 0)
 
-    if not st.session_state.get("video_loaded"):
-        try:
-            YouTube(youtube_url)
-            st.success("YouTube video loaded successfully!")
-            st.session_state["video_loaded"] = True
-        except Exception as e:
-            st.error(f"Failed to load YouTube video: {e}")
-
-# Session state to store events
-if "event_log" not in st.session_state:
-    st.session_state.event_log = []
-
-st.markdown("---")
-st.header("📝 Log Event")
-# Referee selector above event selector
-ref_cols = st.columns(3)
-for col, key in zip(ref_cols, ["a", "s", "d"]):
-    with col:
-        button_label = f"{key.upper()}: {ref_map[key]}" if ref_map[key] else key.upper()
-        button_type = "primary" if st.session_state.get("ref_key") == key else "secondary"
-        if st.button(button_label, key=f"select_ref_{key}", type=button_type):
-            st.session_state["ref_key"] = key
-            st.session_state["current_referee"] = ref_map[key]
-
-st.markdown(f"**Current Referee:** {st.session_state.get('current_referee', '')}")
-
-current_seconds = st.session_state.get("current_time", 0)
-formatted_time = format_seconds(current_seconds)
-st.markdown(f"**Current Video Time:** {formatted_time}")
-
-# Event buttons laid out in a grid
-event_cols = st.columns(3)
-for i, event_name in enumerate(EVENT_TYPES, start=1):
-    col = event_cols[(i - 1) % 3]
-    with col:
-        if st.button(f"{i}. {event_name}", key=f"event_btn_{i}"):
-            log_event(event_name)
+        if not st.session_state.get("video_loaded"):
+            try:
+                YouTube(youtube_url)
+                st.success("YouTube video loaded successfully!")
+                st.session_state["video_loaded"] = True
+            except Exception as e:
+                st.error(f"Failed to load YouTube video: {e}")
+    with col2:
+        st.markdown("#### Log Event")
+        ref_cols = st.columns(3)
+        for col, key in zip(ref_cols, ["a", "s", "d"]):
+            with col:
+                button_label = f"{key.upper()}: {ref_map[key]}" if ref_map[key] else key.upper()
+                button_type = "primary" if st.session_state.get("ref_key") == key else "secondary"
+                if st.button(button_label, key=f"select_ref_{key}", type=button_type):
+                    st.session_state["ref_key"] = key
+                    st.session_state["current_referee"] = ref_map[key]
+        st.markdown(f"**Current Referee:** {st.session_state.get('current_referee', '')}")
+        current_seconds = st.session_state.get("current_time", 0)
+        formatted_time = format_seconds(current_seconds)
+        st.markdown(f"**Current Video Time:** {formatted_time}")
+        event_cols = st.columns(3)
+        for i, event_name in enumerate(EVENT_TYPES, start=1):
+            col = event_cols[(i - 1) % 3]
+            with col:
+                if st.button(f"{i}. {event_name}", key=f"event_btn_{i}"):
+                    log_event(event_name)
 
 # Display and export table
 st.markdown("---")
