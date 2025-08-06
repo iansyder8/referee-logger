@@ -54,8 +54,12 @@ ref_map = {
 # Global key listener for referee and event hotkeys
 key_pressed = st_javascript(
     """
+thvxoy-codex/place-referee-selector-above-event-selector
 const root = window.parent || window;
 if (!root.globalKeyListener) {
+=======
+if (!window.globalKeyListener) {
+main
     const handler = (e) => {
         let key = e.key || e.keyCode;
         if (typeof key === 'string') {
@@ -68,8 +72,13 @@ if (!root.globalKeyListener) {
             Streamlit.setComponentValue(key);
         }
     };
+thvxoy-codex/place-referee-selector-above-event-selector
     root.document.addEventListener('keydown', handler, true);
     root.globalKeyListener = true;
+=======
+    window.addEventListener('keydown', handler, true);
+    window.globalKeyListener = true;
+main
 }
 """,
     key="global_key_listener",
