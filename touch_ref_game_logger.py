@@ -13,8 +13,8 @@ def format_seconds(total_seconds: float) -> str:
     return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
 
-st.set_page_config(page_title="YouTube Sports Match Event Logger", layout="wide")
-st.title("🎥 Sports Match Event Logger")
+st.set_page_config(page_title="Touch Ref Game Logger", layout="wide")
+st.title("🎥 Touch Ref Game Logger")
 
 # -----------------------------------------------------------------------------
 # Configuration
@@ -22,15 +22,15 @@ st.title("🎥 Sports Match Event Logger")
 
 # Available event types mapped to hotkeys 1-9
 EVENT_TYPES = [
-    "Try Scored",
-    "Penalty - Hard Touch",
-    "Penalty - FWD Pass",
-    "Penalty - In The Ruck",
-    "Penalty - Not Moving Forward",
-    "Penalty - Unknown",
-    "Turn Over",
+    "Short 7M",
+    "Long 7M",
+    "Incorrect IC",
+    "Avoidable Penalty",
     "Penalty Missed",
-    "Turn Over Missed",
+    "Control Issue",
+    "Turnover Missed",
+    "Sideline Issue",
+    "Dis-interested",
 ]
 
 # Referee setup
