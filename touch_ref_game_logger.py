@@ -112,26 +112,24 @@ if "event_log" not in st.session_state:
 # Global key listener for referee and event hotkeys
 key_pressed = st_javascript(
     """
-const hotKeys = ['a','s','d','1','2','3','4','5','6','7','8','9'];
-const handler = (e) => {
-    const key = (e.key || '').toLowerCase();
-    const target = e.target || {};
-    const tag = (target.tagName || '').toUpperCase();
-    const editable = target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(tag);
-    if (hotKeys.includes(key) && !editable) {
-        e.preventDefault();
-        Streamlit.setComponentValue(key + ':' + Date.now());
-    }
-};
-let rootDoc;
-try {
-    rootDoc = window.parent.document;
-} catch (e) {
-    rootDoc = document;
-}
-if (!rootDoc.hotKeyListenerAttached) {
-    rootDoc.addEventListener('keydown', handler, true);
-    rootDoc.hotKeyListenerAttached = true;
+const root = window.parent || window;
+if (!root.globalKeyListener) {
+    const handler = (e) => {
+        let key = e.key || e.keyCode;
+        if (typeof key === 'string') {
+            key = key.toLowerCase();
+        } else {
+            key = String.fromCharCode(key).toLowerCase();
+        }
+        if (['a','s','d','1','2','3','4','5','6','7','8','9'].includes(key)) {
+            e.preventDefault();
+            const event = `${key}:${Date.now()}`;
+            Streamlit.setComponentValue(event);
+        }
+    };
+    root.document.addEventListener('keydown', handler, true);
+    root.globalKeyListener = true;
+main
 }
 """,
     key="global_key_listener",
