@@ -31,6 +31,28 @@ st.markdown(
 )
 
 # -----------------------------------------------------------------------------
+# Instructions
+# -----------------------------------------------------------------------------
+
+st.title("Touch Ref Game Logger")
+st.markdown(
+    """
+**Hotkeys**
+
+- `A`, `S`, `D` – select a referee
+- `1`-`9` – log the matching event type
+
+**Workflow**
+1. Enter referee names below.
+2. Paste a YouTube URL to load the video.
+3. Use the hotkeys above to log events as the video plays.
+4. Download the logged events as a CSV when finished.
+
+Click anywhere on the page to ensure it has focus before using the hotkeys.
+"""
+)
+
+# -----------------------------------------------------------------------------
 # Configuration
 # -----------------------------------------------------------------------------
 
@@ -73,8 +95,8 @@ if "current_referee" not in st.session_state:
     st.session_state["current_referee"] = ""
 if "ref_key" not in st.session_state:
     st.session_state["ref_key"] = ""
-if "last_key" not in st.session_state:
-    st.session_state["last_key"] = ""
+if "last_event" not in st.session_state:
+    st.session_state["last_event"] = ""
 
 ref_map = {
     "a": st.session_state.get("referee_a", ""),
@@ -90,22 +112,23 @@ if "event_log" not in st.session_state:
 # Global key listener for referee and event hotkeys
 key_pressed = st_javascript(
     """
-const root = window.parent || window;
-if (!root.globalKeyListener) {
-    const handler = (e) => {
-        let key = e.key || e.keyCode;
-        if (typeof key === 'string') {
-            key = key.toLowerCase();
-        } else {
-            key = String.fromCharCode(key).toLowerCase();
-        }
-        if (['a','s','d','1','2','3','4','5','6','7','8','9'].includes(key)) {
-            e.preventDefault();
-            Streamlit.setComponentValue(key);
-        }
-    };
-    root.document.addEventListener('keydown', handler, true);
-    root.globalKeyListener = true;
+const hotKeys = ['a','s','d','1','2','3','4','5','6','7','8','9'];
+const handler = (e) => {
+    const key = (e.key || '').toLowerCase();
+    if (hotKeys.includes(key)) {
+        e.preventDefault();
+        Streamlit.setComponentValue(key + ':' + Date.now());
+    }
+};
+let rootDoc;
+try {
+    rootDoc = window.parent.document;
+} catch (e) {
+    rootDoc = document;
+}
+if (!rootDoc.hotKeyListenerAttached) {
+    rootDoc.addEventListener('keydown', handler, true);
+    rootDoc.hotKeyListenerAttached = true;
 }
 """,
     key="global_key_listener",
@@ -133,13 +156,14 @@ def log_event(event_name: str) -> None:
 
 
 # Handle hotkeys
-if key_pressed and key_pressed != st.session_state.get("last_key"):
-    st.session_state["last_key"] = key_pressed
-    if key_pressed in ["a", "s", "d"]:
-        st.session_state["ref_key"] = key_pressed
-        st.session_state["current_referee"] = ref_map.get(key_pressed, "")
-    elif key_pressed in [str(i) for i in range(1, len(EVENT_TYPES) + 1)]:
-        event_name = EVENT_TYPES[int(key_pressed) - 1]
+if key_pressed and key_pressed != st.session_state.get("last_event"):
+    st.session_state["last_event"] = key_pressed
+    key_val = key_pressed.split(":", 1)[0]
+    if key_val in ["a", "s", "d"]:
+        st.session_state["ref_key"] = key_val
+        st.session_state["current_referee"] = ref_map.get(key_val, "")
+    elif key_val in [str(i) for i in range(1, len(EVENT_TYPES) + 1)]:
+        event_name = EVENT_TYPES[int(key_val) - 1]
         log_event(event_name)
 
 # Input: YouTube URL
