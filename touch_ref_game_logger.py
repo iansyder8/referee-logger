@@ -48,9 +48,26 @@ EVENT_TYPES = [
 ]
 
 # Referee setup
-st.text_input("Referee for A key", key="referee_a")
-st.text_input("Referee for S key", key="referee_s")
-st.text_input("Referee for D key", key="referee_d")
+# Arrange referee name inputs in columns for a cleaner layout
+name_cols = st.columns(3)
+name_labels = ["Referee 1 Name", "Referee 2 Name", "Referee 3 Name"]
+name_keys = ["referee_a", "referee_s", "referee_d"]
+for col, label, key in zip(name_cols, name_labels, name_keys):
+    with col:
+        st.text_input(label, key=key)
+
+# Tidy up the appearance of the name inputs
+st.markdown(
+    """
+    <style>
+        div[data-testid="column"] div[data-testid="stTextInput"] > div > input {
+            padding: 4px;
+            height: 2rem;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 if "current_referee" not in st.session_state:
     st.session_state["current_referee"] = ""
