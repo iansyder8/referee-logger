@@ -37,11 +37,11 @@ st.markdown(
 
 st.title("Touch Ref Game Logger")
 st.markdown(
-    """
+"""
 **Hotkeys**
 
 - `A`, `S`, `D` – select a referee
-- `1`-`9` – log the matching event type
+- `1` / `2` / `3` / `4` / `5` / `6` / `7` / `8` / `9` / `0` – log the matching event type
 
 **Workflow**
 1. Enter referee names below.
@@ -57,7 +57,7 @@ Click anywhere on the page to ensure it has focus before using the hotkeys.
 # Configuration
 # -----------------------------------------------------------------------------
 
-# Available event types mapped to hotkeys 1-9
+# Available event types mapped to hotkeys 1-0
 EVENT_TYPES = [
     "Short 7M",
     "Long 7M",
@@ -68,7 +68,11 @@ EVENT_TYPES = [
     "Turnover Missed",
     "Sideline Issue",
     "Dis-interested",
+    "Other",
 ]
+
+# Numeric hotkeys corresponding to event types
+EVENT_HOTKEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
 
 # Referee setup
 # Arrange referee name inputs in columns for a cleaner layout
@@ -141,8 +145,9 @@ if key_pressed and key_pressed != st.session_state.get("last_key"):
     if key_val in ["a", "s", "d"]:
         st.session_state["ref_key"] = key_val
         st.session_state["current_referee"] = ref_map.get(key_val, "")
-    elif key_val in [str(i) for i in range(1, len(EVENT_TYPES) + 1)]:
-        event_name = EVENT_TYPES[int(key_val) - 1]
+    elif key_val in EVENT_HOTKEYS[: len(EVENT_TYPES)]:
+        event_index = EVENT_HOTKEYS.index(key_val)
+        event_name = EVENT_TYPES[event_index]
         log_event(event_name)
 
 # Input: YouTube URL
@@ -186,10 +191,10 @@ if youtube_url:
         formatted_time = format_seconds(current_seconds)
         st.markdown(f"**Current Video Time:** {formatted_time}")
         event_cols = st.columns(3)
-        for i, event_name in enumerate(EVENT_TYPES, start=1):
-            col = event_cols[(i - 1) % 3]
+        for idx, (hotkey, event_name) in enumerate(zip(EVENT_HOTKEYS, EVENT_TYPES)):
+            col = event_cols[idx % 3]
             with col:
-                if st.button(f"{i}. {event_name}", key=f"event_btn_{i}"):
+                if st.button(f"{hotkey}. {event_name}", key=f"event_btn_{hotkey}"):
                     log_event(event_name)
 
 # Display and export table
