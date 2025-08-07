@@ -73,8 +73,8 @@ if "current_referee" not in st.session_state:
     st.session_state["current_referee"] = ""
 if "ref_key" not in st.session_state:
     st.session_state["ref_key"] = ""
-if "last_key" not in st.session_state:
-    st.session_state["last_key"] = ""
+if "last_event" not in st.session_state:
+    st.session_state["last_event"] = ""
 
 ref_map = {
     "a": st.session_state.get("referee_a", ""),
@@ -101,7 +101,8 @@ if (!root.globalKeyListener) {
         }
         if (['a','s','d','1','2','3','4','5','6','7','8','9'].includes(key)) {
             e.preventDefault();
-            Streamlit.setComponentValue(key);
+            const event = `${key}:${Date.now()}`;
+            Streamlit.setComponentValue(event);
         }
     };
     root.document.addEventListener('keydown', handler, true);
@@ -133,13 +134,14 @@ def log_event(event_name: str) -> None:
 
 
 # Handle hotkeys
-if key_pressed and key_pressed != st.session_state.get("last_key"):
-    st.session_state["last_key"] = key_pressed
-    if key_pressed in ["a", "s", "d"]:
-        st.session_state["ref_key"] = key_pressed
-        st.session_state["current_referee"] = ref_map.get(key_pressed, "")
-    elif key_pressed in [str(i) for i in range(1, len(EVENT_TYPES) + 1)]:
-        event_name = EVENT_TYPES[int(key_pressed) - 1]
+if key_pressed and key_pressed != st.session_state.get("last_event"):
+    st.session_state["last_event"] = key_pressed
+    key_val = key_pressed.split(":", 1)[0]
+    if key_val in ["a", "s", "d"]:
+        st.session_state["ref_key"] = key_val
+        st.session_state["current_referee"] = ref_map.get(key_val, "")
+    elif key_val in [str(i) for i in range(1, len(EVENT_TYPES) + 1)]:
+        event_name = EVENT_TYPES[int(key_val) - 1]
         log_event(event_name)
 
 # Input: YouTube URL
