@@ -3,6 +3,7 @@ import pandas as pd
 from pytube import YouTube
 from streamlit_player import st_player
 from streamlit_javascript import st_javascript
+from streamlit_keypress import key_press_events
 
 
 def format_seconds(total_seconds: float) -> str:
@@ -36,11 +37,11 @@ st.markdown(
 
 st.title("Touch Ref Game Logger")
 st.markdown(
-    """
+"""
 **Hotkeys**
 
 - `A`, `S`, `D` – select a referee
-- `1`-`9` – log the matching event type
+- `1` / `2` / `3` / `4` / `5` / `6` / `7` / `8` / `9` / `0` – log the matching event type
 
 **Workflow**
 1. Enter referee names below.
@@ -56,7 +57,7 @@ Click anywhere on the page to ensure it has focus before using the hotkeys.
 # Configuration
 # -----------------------------------------------------------------------------
 
-# Available event types mapped to hotkeys 1-9
+# Available event types mapped to hotkeys 1-0
 EVENT_TYPES = [
     "Short 7M",
     "Long 7M",
@@ -67,7 +68,11 @@ EVENT_TYPES = [
     "Turnover Missed",
     "Sideline Issue",
     "Dis-interested",
+    "Other",
 ]
+
+# Numeric hotkeys corresponding to event types
+EVENT_HOTKEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
 
 # Referee setup
 # Arrange referee name inputs in columns for a cleaner layout
@@ -95,8 +100,8 @@ if "current_referee" not in st.session_state:
     st.session_state["current_referee"] = ""
 if "ref_key" not in st.session_state:
     st.session_state["ref_key"] = ""
-if "last_event" not in st.session_state:
-    st.session_state["last_event"] = ""
+if "last_key" not in st.session_state:
+    st.session_state["last_key"] = ""
 
 ref_map = {
     "a": st.session_state.get("referee_a", ""),
@@ -110,30 +115,7 @@ if "event_log" not in st.session_state:
 
 
 # Global key listener for referee and event hotkeys
-key_pressed = st_javascript(
-    """
-const root = window.parent || window;
-if (!root.globalKeyListener) {
-    const handler = (e) => {
-        let key = e.key || e.keyCode;
-        if (typeof key === 'string') {
-            key = key.toLowerCase();
-        } else {
-            key = String.fromCharCode(key).toLowerCase();
-        }
-        if (['a','s','d','1','2','3','4','5','6','7','8','9'].includes(key)) {
-            e.preventDefault();
-            const event = `${key}:${Date.now()}`;
-            Streamlit.setComponentValue(event);
-        }
-    };
-    root.document.addEventListener('keydown', handler, true);
-    root.globalKeyListener = true;
-main
-}
-""",
-    key="global_key_listener",
-)
+key_pressed = key_press_events()
 
 
 def log_event(event_name: str) -> None:
@@ -157,14 +139,15 @@ def log_event(event_name: str) -> None:
 
 
 # Handle hotkeys
-if key_pressed and key_pressed != st.session_state.get("last_event"):
-    st.session_state["last_event"] = key_pressed
-    key_val = key_pressed.split(":", 1)[0]
+if key_pressed and key_pressed != st.session_state.get("last_key"):
+    st.session_state["last_key"] = key_pressed
+    key_val = key_pressed.lower()
     if key_val in ["a", "s", "d"]:
         st.session_state["ref_key"] = key_val
         st.session_state["current_referee"] = ref_map.get(key_val, "")
-    elif key_val in [str(i) for i in range(1, len(EVENT_TYPES) + 1)]:
-        event_name = EVENT_TYPES[int(key_val) - 1]
+    elif key_val in EVENT_HOTKEYS[: len(EVENT_TYPES)]:
+        event_index = EVENT_HOTKEYS.index(key_val)
+        event_name = EVENT_TYPES[event_index]
         log_event(event_name)
 
 # Input: YouTube URL
@@ -208,10 +191,10 @@ if youtube_url:
         formatted_time = format_seconds(current_seconds)
         st.markdown(f"**Current Video Time:** {formatted_time}")
         event_cols = st.columns(3)
-        for i, event_name in enumerate(EVENT_TYPES, start=1):
-            col = event_cols[(i - 1) % 3]
+        for idx, (hotkey, event_name) in enumerate(zip(EVENT_HOTKEYS, EVENT_TYPES)):
+            col = event_cols[idx % 3]
             with col:
-                if st.button(f"{i}. {event_name}", key=f"event_btn_{i}"):
+                if st.button(f"{hotkey}. {event_name}", key=f"event_btn_{hotkey}"):
                     log_event(event_name)
 
 # Display and export table
