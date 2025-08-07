@@ -31,6 +31,28 @@ st.markdown(
 )
 
 # -----------------------------------------------------------------------------
+# Instructions
+# -----------------------------------------------------------------------------
+
+st.title("Touch Ref Game Logger")
+st.markdown(
+    """
+**Hotkeys**
+
+- `A`, `S`, `D` – select a referee
+- `1`-`9` – log the matching event type
+
+**Workflow**
+1. Enter referee names below.
+2. Paste a YouTube URL to load the video.
+3. Use the hotkeys above to log events as the video plays.
+4. Download the logged events as a CSV when finished.
+
+Click anywhere on the page to ensure it has focus before using the hotkeys.
+"""
+)
+
+# -----------------------------------------------------------------------------
 # Configuration
 # -----------------------------------------------------------------------------
 
@@ -107,6 +129,7 @@ if (!root.globalKeyListener) {
     };
     root.document.addEventListener('keydown', handler, true);
     root.globalKeyListener = true;
+main
 }
 """,
     key="global_key_listener",
