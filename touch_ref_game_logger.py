@@ -115,7 +115,10 @@ key_pressed = st_javascript(
 const hotKeys = ['a','s','d','1','2','3','4','5','6','7','8','9'];
 const handler = (e) => {
     const key = (e.key || '').toLowerCase();
-    if (hotKeys.includes(key)) {
+    const target = e.target || {};
+    const tag = (target.tagName || '').toUpperCase();
+    const editable = target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(tag);
+    if (hotKeys.includes(key) && !editable) {
         e.preventDefault();
         Streamlit.setComponentValue(key + ':' + Date.now());
     }
