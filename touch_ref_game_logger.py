@@ -148,6 +148,8 @@ def log_event(event_name: str) -> None:
 if key_pressed and key_pressed != st.session_state.get("last_key"):
     st.session_state["last_key"] = key_pressed
     key_val = key_pressed.lower()
+    # Preserve the current playback time so the video resumes after rerun
+    st.session_state["resume_time"] = st.session_state.get("current_time", 0)
     if key_val in ["a", "s", "d", "f"]:
         st.session_state["ref_key"] = key_val
         st.session_state["current_referee"] = ref_map.get(key_val, "")
@@ -165,12 +167,19 @@ if youtube_url:
     with col1:
         # Maintain a 16:9 aspect ratio based on the available width
         player_height = int(viewport_width * 9 / 16) if viewport_width else 405
+        start_time = st.session_state.pop("resume_time", None)
+        player_kwargs = {
+            'events': ['onProgress'],
+            'progress_interval': 1000,
+            'height': player_height,
+            'key': 'youtube_player',
+            'playing': True,
+        }
+        if start_time is not None:
+            player_kwargs['start'] = start_time
         player_event = st_player(
             youtube_url,
-            events=["onProgress"],
-            progress_interval=1000,
-            height=player_height,
-            key="youtube_player",
+            **player_kwargs,
         )
         if player_event and player_event.name == "onProgress" and player_event.data:
             st.session_state["current_time"] = player_event.data.get("playedSeconds", 0)
