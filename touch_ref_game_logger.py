@@ -182,7 +182,9 @@ if youtube_url:
             'playing': True,
         }
         if start_time is not None:
-            player_kwargs['start'] = start_time
+            player_kwargs['config'] = {
+                'youtube': {'playerVars': {'start': int(start_time)}}
+            }
         player_event = st_player(
             youtube_url,
             **player_kwargs,
