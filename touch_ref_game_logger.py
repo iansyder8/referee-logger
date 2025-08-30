@@ -121,7 +121,13 @@ if "event_log" not in st.session_state:
 
 
 # Global key listener for referee and event hotkeys
-key_pressed = key_press_events()
+# ``streamlit-keypress`` may return either a raw string (older versions)
+# or a mapping with a ``key`` entry (newer versions). Normalize this so
+# the rest of the app can always work with a simple string.
+key_event = key_press_events()
+key_pressed = (
+    key_event.get("key") if isinstance(key_event, dict) else key_event
+)
 
 
 def log_event(event_name: str) -> None:
@@ -145,7 +151,7 @@ def log_event(event_name: str) -> None:
 
 
 # Handle hotkeys
-if key_pressed and key_pressed != st.session_state.get("last_key"):
+if isinstance(key_pressed, str) and key_pressed != st.session_state.get("last_key"):
     st.session_state["last_key"] = key_pressed
     key_val = key_pressed.lower()
     # Preserve the current playback time so the video resumes after rerun
@@ -176,7 +182,9 @@ if youtube_url:
             'playing': True,
         }
         if start_time is not None:
-            player_kwargs['start'] = start_time
+            player_kwargs['config'] = {
+                'youtube': {'playerVars': {'start': int(start_time)}}
+            }
         player_event = st_player(
             youtube_url,
             **player_kwargs,
