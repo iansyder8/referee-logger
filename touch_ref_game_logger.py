@@ -40,7 +40,7 @@ st.markdown(
 """
 **Hotkeys**
 
-- `A`, `S`, `D` – select a referee
+- `A`, `S`, `D`, `F` – select a referee
 - `1` / `2` / `3` / `4` / `5` / `6` / `7` / `8` / `9` / `0` – log the matching event type
 
 **Workflow**
@@ -76,9 +76,14 @@ EVENT_HOTKEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
 
 # Referee setup
 # Arrange referee name inputs in columns for a cleaner layout
-name_cols = st.columns(3)
-name_labels = ["Referee 1 Name", "Referee 2 Name", "Referee 3 Name"]
-name_keys = ["referee_a", "referee_s", "referee_d"]
+name_cols = st.columns(4)
+name_labels = [
+    "Referee 1 Name",
+    "Referee 2 Name",
+    "Referee 3 Name",
+    "Referee 4 Name",
+]
+name_keys = ["referee_a", "referee_s", "referee_d", "referee_f"]
 for col, label, key in zip(name_cols, name_labels, name_keys):
     with col:
         st.text_input(label, key=key)
@@ -107,6 +112,7 @@ ref_map = {
     "a": st.session_state.get("referee_a", ""),
     "s": st.session_state.get("referee_s", ""),
     "d": st.session_state.get("referee_d", ""),
+    "f": st.session_state.get("referee_f", ""),
 }
 
 # Session state to store events
@@ -121,7 +127,7 @@ key_pressed = key_press_events()
 def log_event(event_name: str) -> None:
     """Log an event with the currently selected referee."""
     if not st.session_state.get("ref_key"):
-        st.warning("Press A, S, or D to select a referee before logging.")
+        st.warning("Press A, S, D, or F to select a referee before logging.")
         return
     referee_name = st.session_state.get(
         f"referee_{st.session_state['ref_key']}", ""
@@ -142,7 +148,7 @@ def log_event(event_name: str) -> None:
 if key_pressed and key_pressed != st.session_state.get("last_key"):
     st.session_state["last_key"] = key_pressed
     key_val = key_pressed.lower()
-    if key_val in ["a", "s", "d"]:
+    if key_val in ["a", "s", "d", "f"]:
         st.session_state["ref_key"] = key_val
         st.session_state["current_referee"] = ref_map.get(key_val, "")
     elif key_val in EVENT_HOTKEYS[: len(EVENT_TYPES)]:
@@ -178,8 +184,8 @@ if youtube_url:
                 st.error(f"Failed to load YouTube video: {e}")
     with col2:
         st.markdown("#### Log Event")
-        ref_cols = st.columns(3)
-        for col, key in zip(ref_cols, ["a", "s", "d"]):
+        ref_cols = st.columns(4)
+        for col, key in zip(ref_cols, ["a", "s", "d", "f"]):
             with col:
                 button_label = f"{key.upper()}: {ref_map[key]}" if ref_map[key] else key.upper()
                 button_type = "primary" if st.session_state.get("ref_key") == key else "secondary"
